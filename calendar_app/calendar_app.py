@@ -110,19 +110,22 @@ def validate_date(date_str):
         except ValueError:
             return None
 
+def calculate(first_number, operation, second_number):
+    try:
+        first_number = float(first_number.strip())
+        second_number = float(second_number.strip())
+    except ValueError:
+        return None
+
+    if operation == '+':
+        return first_number + second_number
+    elif operation == '-':
+        return first_number - second_number
+    return None
+
 
 if __name__ == '__main__':
     while True:
-        input_str = input('Enter a date: ')
-        if input_str.lower() in ['exit', 'quit', 'q']:
-            break
-
-        result = validate_date(input_str)
-        if result:
-            print(f"Parsed: {result}")
-            #print(f"Formatted: {result.strftime('%d.%m.%Y')}")
-        else:
-            print("Could not parse date")
-        print()
+        calculate(input().split())
 
 
