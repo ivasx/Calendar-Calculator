@@ -127,5 +127,3 @@ def calculate(first_number, operation, second_number):
 if __name__ == '__main__':
     while True:
         calculate(input().split())
-
-
