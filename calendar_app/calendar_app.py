@@ -5,7 +5,6 @@ import warnings
 from decorators import *
 
 
-
 @format_date
 def validate_date(date_str):
     date_str = date_str.strip()
@@ -110,20 +109,84 @@ def validate_date(date_str):
         except ValueError:
             return None
 
-def calculate(first_number, operation, second_number):
-    try:
-        first_number = float(first_number.strip())
-        second_number = float(second_number.strip())
-    except ValueError:
-        return None
 
-    if operation == '+':
-        return first_number + second_number
-    elif operation == '-':
-        return first_number - second_number
-    return None
+def calculate(expression):
+    """
+    Виконує обчислення з датами та числами.
+    Приклади:
+    - "15.09 + 10" -> додає 10 днів до 15 вересня
+    - "15.09 - 5" -> віднімає 5 днів від 15 вересня
+    - "5 + 3" -> звичайне додавання чисел
+    """
+    try:
+        # Розділяємо вираз на частини
+        parts = expression.split()
+        if len(parts) != 3:
+            return "Помилка: неправильний формат. Використовуйте формат: 'дата/число операція число'"
+
+        first_part, operation, second_part = parts
+
+        # Перевіряємо, чи перша частина є датою
+        parsed_date = validate_date(first_part)
+
+        if parsed_date:
+            # Якщо перша частина - дата, друга має бути числом
+            try:
+                days = int(second_part)
+            except ValueError:
+                return "Помилка: другий операнд має бути числом"
+
+            # Отримуємо datetime об'єкт (без форматування)
+            date_obj = validate_date.__wrapped__(first_part)  # викликаємо оригінальну функцію без декоратора
+            if not date_obj:
+                return "Помилка: неправильна дата"
+
+            if operation == '+':
+                result_date = date_obj + datetime.timedelta(days=days)
+                return result_date.strftime('%d.%m.%Y')
+            elif operation == '-':
+                result_date = date_obj - datetime.timedelta(days=days)
+                return result_date.strftime('%d.%m.%Y')
+            else:
+                return "Помилка: підтримуються тільки операції + та -"
+
+        else:
+            # Якщо перша частина не дата, виконуємо звичайні математичні операції
+            try:
+                first_number = float(first_part)
+                second_number = float(second_part)
+            except ValueError:
+                return "Помилка: неправильні числа або дата"
+
+            if operation == '+':
+                return first_number + second_number
+            elif operation == '-':
+                return first_number - second_number
+            else:
+                return "Помилка: підтримуються тільки операції + та -"
+
+    except Exception as e:
+        return f"Помилка: {str(e)}"
 
 
 if __name__ == '__main__':
+    print("Календарний калькулятор")
+    print("Приклади використання:")
+    print("- 15.09 + 10 (додати 10 днів до 15 вересня)")
+    print("- 15.09 - 5 (відняти 5 днів від 15 вересня)")
+    print("- 5 + 3 (звичайне додавання)")
+    print("Введіть 'exit' для виходу\n")
+
     while True:
-        calculate(input().split())
+        try:
+            user_input = input("Введіть вираз: ").strip()
+            if user_input.lower() == 'exit':
+                break
+            if user_input:
+                result = calculate(user_input)
+                print(f"Результат: {result}")
+        except KeyboardInterrupt:
+            print("\nВихід...")
+            break
+        except EOFError:
+            break
