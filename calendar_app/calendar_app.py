@@ -4,6 +4,7 @@ import re
 import warnings
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from kivy.uix.button import Button
@@ -96,7 +97,7 @@ def calculate(expression):
     try:
         parts = expression.split()
         if len(parts) != 3:
-            return "❌ Неправильний формат (наприклад: 12.09 + 5)"
+            return "❌ Формат: дата + число / число + число"
 
         first_part, operation, second_part = parts
         parsed_date = validate_date(first_part)
@@ -114,7 +115,7 @@ def calculate(expression):
                 result_date = parsed_date - datetime.timedelta(days=days)
                 return result_date.strftime('%d.%m.%Y')
             else:
-                return "❌ Підтримуються тільки '+' або '-'"
+                return "❌ Підтримуються лише '+' або '-'"
 
         else:
             try:
@@ -128,30 +129,57 @@ def calculate(expression):
             elif operation == '-':
                 return str(first_number - second_number)
             else:
-                return "❌ Підтримуються тільки '+' або '-'"
+                return "❌ Підтримуються лише '+' або '-'"
 
     except Exception as e:
         return f"❌ Помилка: {str(e)}"
 
 
+class CalculatorLayout(BoxLayout):
+    def __init__(self, **kwargs):
+        super().__init__(orientation='vertical', padding=10, spacing=10, **kwargs)
+
+        self.input = TextInput(hint_text='Введіть вираз', multiline=False, readonly=True, font_size=24)
+        self.result = Label(text='Результат: ', font_size=20, size_hint=(1, 0.3))
+
+        self.add_widget(self.input)
+        self.add_widget(self.result)
+
+        self.keyboard = GridLayout(cols=4, spacing=5, size_hint=(1, 2))
+        buttons = [
+            '7', '8', '9', '+',
+            '4', '5', '6', '-',
+            '1', '2', '3', '.',
+            '0', '/', ' ', 'C',
+            '←', '=', '-', ' '
+        ]
+
+        for label in buttons:
+            if label.strip():
+                btn = Button(text=label, font_size=24, on_press=self.on_button_press)
+            else:
+                btn = Label()
+            self.keyboard.add_widget(btn)
+
+        self.add_widget(self.keyboard)
+
+    def on_button_press(self, instance):
+        text = instance.text
+        if text == 'C':
+            self.input.text = ''
+            self.result.text = 'Результат: '
+        elif text == '←':
+            self.input.text = self.input.text[:-1]
+        elif text == '=':
+            result = calculate(self.input.text.strip())
+            self.result.text = f'Результат: {result}'
+        else:
+            self.input.text += text
+
+
 class DateCalculatorApp(App):
     def build(self):
-        self.layout = BoxLayout(orientation='vertical', padding=20, spacing=10)
-
-        self.input = TextInput(hint_text='Введіть вираз (наприклад: 12.09 + 5)', multiline=False)
-        self.result_label = Label(text='Результат буде тут', size_hint=(1, 0.5))
-        self.button = Button(text='Обчислити', on_press=self.calculate_result)
-
-        self.layout.add_widget(self.input)
-        self.layout.add_widget(self.button)
-        self.layout.add_widget(self.result_label)
-
-        return self.layout
-
-    def calculate_result(self, instance):
-        expression = self.input.text.strip()
-        result = calculate(expression)
-        self.result_label.text = f"Результат: {result}"
+        return CalculatorLayout()
 
 
 if __name__ == '__main__':
