@@ -36,61 +36,71 @@ def validate_date(date_str):
     if parsed:
         return parsed
 
+    # Формат: цифра.цифра.цифра (день.місяць.рік або рік.місяць.день)
     match3 = re.match(r'^(\d{1,4})[ .-/](\d{1,2})[ .-/](\d{1,4})$', date_str)
-    match2 = re.match(r'^(\d{1,2})[ .-/](\d{1,2})$', date_str)
-    match1 = re.match(r'^(\d{1,2})$', date_str)
-
     if match3:
         a, b, c = int(match3.group(1)), int(match3.group(2)), int(match3.group(3))
-        if a > 31 and (c <= 31):
-            year, day, month = a, c, b
-        elif c > 31 and (a <= 31):
-            year, day, month = c, a, b
-        elif a > 12 and c > 12:
-            if b <= 12:
-                day = a if a <= 31 else c
-                month = b
-                year = c if c > a else current_year
-            else:
-                return None
+
+        if a > 31 and c <= 31:
+            year, month, day = a, b, c
+        elif c > 31 and a <= 31:
+            day, month, year = a, b, c
         else:
             day, month, year = a, b, c
 
         if year < 100:
             year += 2000
 
-    elif match2:
-        a, b = int(match2.group(1)), int(match2.group(2))
-        if a > 12:
-            day, month, year = a, b, current_year
-        elif b > 12:
-            day, month, year = b, a, current_year
-        else:
-            day, month, year = a, b, current_year
+        try:
+            return datetime.datetime(year, month, day)
+        except ValueError:
+            try:
+                return datetime.datetime(year, day, month)
+            except ValueError:
+                return None
 
-    elif match1:
+    # Формат: день.місяць (без року)
+    match2 = re.match(r'^(\d{1,2})[ .-/](\d{1,2})$', date_str)
+    if match2:
+        a, b = int(match2.group(1)), int(match2.group(2))
+
+        if a > 12:
+            day, month = a, b
+        elif b > 12:
+            day, month = b, a
+        else:
+            day, month = a, b
+
+        year = current_year
+
+        try:
+            return datetime.datetime(year, month, day)
+        except ValueError:
+            return None
+
+    # Формат: тільки день
+    match1 = re.match(r'^(\d{1,2})$', date_str)
+    if match1:
         day = int(match1.group(1))
         month = datetime.datetime.now().month
         year = current_year
 
-    else:
         try:
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore", DeprecationWarning)
-                parsed = dateparser.parse(date_str, languages=['uk'])
-                if parsed:
-                    return parsed
-        except Exception:
-            pass
-        return None
-
-    try:
-        return datetime.datetime(year, month, day)
-    except ValueError:
-        try:
-            return datetime.datetime(year, day, month)
+            return datetime.datetime(year, month, day)
         except ValueError:
             return None
+
+    # Остання спроба — через dateparser
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            parsed = dateparser.parse(date_str, languages=['uk'])
+            if parsed:
+                return parsed
+    except Exception:
+        pass
+
+    return None
 
 
 def calculate(expression):
