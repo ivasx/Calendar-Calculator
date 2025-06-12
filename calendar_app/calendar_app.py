@@ -95,12 +95,19 @@ def validate_date(date_str):
 
 def calculate(expression):
     try:
-        parts = expression.split()
-        if len(parts) != 3:
+        # Додаємо пробіли навколо оператора
+        expression = re.sub(r'(\d)([+-])(\d)', r'\1 \2 \3', expression)
+        expression = re.sub(r'([/.])', r' \1 ', expression)
+        expression = re.sub(r'\s+', ' ', expression).strip()
+
+        # Визначаємо частини виразу
+        match = re.match(r'^(.+?)\s*([+-])\s*(\d+)$', expression)
+        if not match:
             return "❌ Формат: дата + число / число + число"
 
-        first_part, operation, second_part = parts
-        parsed_date = validate_date(first_part)
+        first_part, operation, second_part = match.groups()
+
+        parsed_date = validate_date(first_part.strip())
 
         if parsed_date:
             try:
